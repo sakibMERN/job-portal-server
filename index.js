@@ -53,6 +53,8 @@ async function run() {
       res.send(result);
     });
 
+   
+
     //job applications apis
 
     //get specific applicant data
@@ -62,6 +64,20 @@ async function run() {
         applicant_email: email,
       };
       const result = await jobsApplicationCollection.find(query).toArray();
+
+      //fokira way for aggregate data
+      for(const application of result) {
+        // console.log(application.job_id);
+        const myJobQuery = {_id: new ObjectId(application.job_id)};
+        const job = await jobsCollection.findOne(myJobQuery);
+        if(job){
+          application.title = job.title;
+          application.company = job.company;
+          application.company_logo = job.company_logo;
+          application.location = job.location;
+        }
+        // console.log(application);
+      }
       res.send(result);
     });
 
