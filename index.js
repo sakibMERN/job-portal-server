@@ -39,7 +39,12 @@ async function run() {
 
     //get all data
     app.get("/jobs", async (req, res) => {
-      const cursor = jobsCollection.find();
+      const email = req.query.email;
+      let query = {};
+      if (email) {
+        query = { hr_email: email };
+      }
+      const cursor = jobsCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -53,11 +58,11 @@ async function run() {
       res.send(result);
     });
 
-    app.post('/jobs', async(req, res) => {
+    app.post("/jobs", async (req, res) => {
       const newJobs = req.body;
       const result = await jobsCollection.insertOne(newJobs);
       res.send(result);
-    })
+    });
 
     //job applications apis
 
@@ -70,11 +75,11 @@ async function run() {
       const result = await jobsApplicationCollection.find(query).toArray();
 
       //fokira way for aggregate data
-      for(const application of result) {
+      for (const application of result) {
         // console.log(application.job_id);
-        const myJobQuery = {_id: new ObjectId(application.job_id)};
+        const myJobQuery = { _id: new ObjectId(application.job_id) };
         const job = await jobsCollection.findOne(myJobQuery);
-        if(job){
+        if (job) {
           application.title = job.title;
           application.company = job.company;
           application.company_logo = job.company_logo;
@@ -89,6 +94,30 @@ async function run() {
     app.post("/job-applications", async (req, res) => {
       const application = req.body;
       const result = await jobsApplicationCollection.insertOne(application);
+
+      //find the job using job_id
+      const id = application.job_id;
+      const query = { _id: new ObjectId(id) };
+      const job = await jobsCollection.findOne(query);
+      console.log(job);
+
+      let count = 0;
+      if (job.jobApplicant) {
+        count = job.jobApplicant + 1;
+      } else {
+        count = 1;
+      }
+
+      // Update job info with applicant count
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          jobApplicant: count,
+        },
+      };
+      const applicant = await jobsCollection.updateOne(filter, updateDoc);
+      console.log(applicant);
+
       res.send(result);
     });
 
