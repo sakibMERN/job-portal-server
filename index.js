@@ -132,6 +132,21 @@ async function run() {
       res.send(result);
     });
 
+    //Update application status
+    app.patch('/job-applications/:id', async(req, res) => {
+      const id = req.params.id;
+      const data = req.body;
+      const filter = {_id: new ObjectId(id)};
+      const updatedDoc = {
+        $set: {
+          status: data.status,
+        },
+      }
+      const result = await jobsApplicationCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+
+    })
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
