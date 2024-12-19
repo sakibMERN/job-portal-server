@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
@@ -35,6 +36,14 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+     //Auth related apis
+     app.post('/jwt', async(req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, 'secret', {expiresIn: '1h'});
+      res.send(token);
+
+     })
+
     //Jobs collections
 
     //get all data
@@ -64,19 +73,18 @@ async function run() {
       res.send(result);
     });
 
-    //job applications apis==================>>>>>>>>>>>>>
+    //job applications  apis==================>>>>>>>>>>>>>
 
-    
-    //get all applicant data for a specific job 
-    app.get('/job-applications/jobs/:job_id', async(req, res) => {
+    //get all applicant data for a specific job
+    app.get("/job-applications/jobs/:job_id", async (req, res) => {
       const jobId = req.params.job_id;
-      const query = {job_id: jobId};
+      const query = { job_id: jobId };
       const result = await jobsApplicationCollection.find(query).toArray();
 
       // console.log(result);
       res.send(result);
-    })
-    
+    });
+
     //get specific applicant data using email
     app.get("/job-application", async (req, res) => {
       const email = req.query.email;
@@ -133,19 +141,21 @@ async function run() {
     });
 
     //Update application status
-    app.patch('/job-applications/:id', async(req, res) => {
+    app.patch("/job-applications/:id", async (req, res) => {
       const id = req.params.id;
       const data = req.body;
-      const filter = {_id: new ObjectId(id)};
+      const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
         $set: {
           status: data.status,
         },
-      }
-      const result = await jobsApplicationCollection.updateOne(filter, updatedDoc);
+      };
+      const result = await jobsApplicationCollection.updateOne(
+        filter,
+        updatedDoc
+      );
       res.send(result);
-
-    })
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
