@@ -1,12 +1,14 @@
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const cookieParser = require('cookie-parser');
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 const port = process.env.PORT || 5000;
 
 //middleware
+app.use(cookieParser());
 app.use(cors());
 app.use(express.json());
 
@@ -39,8 +41,14 @@ async function run() {
      //Auth related apis
      app.post('/jwt', async(req, res) => {
       const user = req.body;
-      const token = jwt.sign(user, 'secret', {expiresIn: '1h'});
-      res.send(token);
+      const token = jwt.sign(user, process.env.JWT_SECRET, {expiresIn: '1h'});
+      res
+      .cookie('token', token, {
+        httpOnly: true,
+        secure: false, //http://localhost:5000
+        sameSite: "none",
+      })
+      .send({success: true});
 
      })
 
